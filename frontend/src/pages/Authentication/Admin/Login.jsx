@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import openEye from "../../../assets/eye-solid-full.svg";
 import closeEye from "../../../assets/eye-slash-solid-full.svg";
+import { Link } from "react-router-dom";
 
 export default function Login() {
   const [displayPassword, setDisplayPassword] = useState(false);
@@ -30,6 +31,11 @@ export default function Login() {
             </div>
             <br />
           </div>
+          <Link to="/admin-dashboard">
+            <button className="flex flex-col bg-[#FFF8F0] p-3 text-[#C1440E] justify-center items-center font-bold text-2xl rounded-md hover:bg-[#2D2D2D]">
+              Log In
+            </button>
+          </Link>
         </form>
       </div>
     </div>

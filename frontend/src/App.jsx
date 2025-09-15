@@ -7,6 +7,7 @@ import Checkout from "./pages/Cart and Checkout/Checkout";
 import Dashboard from "./pages/Authentication/Customer/Dashboard";
 import About from "./pages/General/About";
 import Contact from "./pages/General/Contact";
+import AdminDashboard from "./pages/Authentication/Admin/Dashboard";
 import Login from "./pages/Authentication/Admin/Login";
 
 function App() {
@@ -22,6 +23,7 @@ function App() {
           <Route path="/about" element={<About />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/admin" element={<Login />} />
+          <Route path="/admin-dashboard" element={<AdminDashboard />} />
         </Routes>
       </Router>
     </div>
