@@ -5,10 +5,8 @@ import { Order } from "../models/order.model.js";
 // Get cart items
 export const getCartItems = async (req, res) => {
   try {
-    const userId = req.params.userId;
-    const cart = await Cart.findOne({ user: userId }).populate(
-      "products.product"
-    );
+    let cart = await Cart.findOne().populate("products.product");
+    if (!cart) cart = new Cart({ products: [] });
     res.status(200).json(cart);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -18,17 +16,12 @@ export const getCartItems = async (req, res) => {
 // Add item to cart
 export const addToCart = async (req, res) => {
   try {
-    const userId = req.params.userId; // ✅ taking from params
     const { productId, quantity } = req.body;
-
     const product = await Product.findById(productId);
     if (!product) return res.status(404).json({ message: "Product not found" });
 
-    let cart = await Cart.findOne({ user: userId });
-
-    if (!cart) {
-      cart = new Cart({ user: userId, products: [] });
-    }
+    let cart = await Cart.findOne();
+    if (!cart) cart = new Cart({ products: [] });
 
     const existingItem = cart.products.find(
       (item) => item.product.toString() === productId
@@ -50,13 +43,10 @@ export const addToCart = async (req, res) => {
 // Remove item from cart
 export const removeFromCart = async (req, res) => {
   try {
-    const userId = req.params.userId;
     const { productId } = req.params;
-
-    const cart = await Cart.findOne({ user: userId });
+    const cart = await Cart.findOne();
     if (!cart) return res.status(404).json({ message: "Cart not found" });
 
-    // Use equals() for ObjectId comparison
     cart.products = cart.products.filter(
       (item) => !item.product.equals(productId)
     );
@@ -71,50 +61,63 @@ export const removeFromCart = async (req, res) => {
 // Update quantity
 export const updateQuantity = async (req, res) => {
   try {
-    const userId = req.params.userId;
     const { productId, quantity } = req.body;
+    const cart = await Cart.findOne();
+    if (!cart) return res.status(404).json({ message: "Cart not found" });
 
-    const cart = await Cart.findOneAndUpdate(
-      { user: userId, "products.product": productId }, // filter
-      { $set: { "products.$.quantity": quantity } }, // update
-      { new: true } // return updated doc
+    const item = cart.products.find(
+      (item) => item.product.toString() === productId
     );
+    if (item) item.quantity = quantity;
 
+    await cart.save();
     res.status(200).json(cart);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 
-// Checkout (Move cart to Order)
+// Checkout
 export const checkout = async (req, res) => {
   try {
-    const userId = req.params.userId;
-    const { shippingAddress } = req.body;
+    const { shippingAddress, paymentMethod } = req.body;
 
-    const cart = await Cart.findOne({ user: userId }).populate(
-      "products.product"
-    );
+    const cart = await Cart.find().populate("products.product");
     if (!cart || cart.products.length === 0)
       return res.status(400).json({ message: "Cart is empty" });
 
     const orderProducts = cart.products.map((item) => ({
       product: item.product._id,
+      name: item.product.name,
       quantity: item.quantity,
       price: item.product.price,
     }));
 
+    const totalAmount = orderProducts.reduce(
+      (sum, item) => sum + item.price * item.quantity,
+      0
+    );
+
     const newOrder = new Order({
-      user: userId,
       products: orderProducts,
       shippingAddress,
+      paymentMethod,
+      totalAmount,
     });
 
     await newOrder.save();
+
+    // Clear cart
     cart.products = [];
     await cart.save();
 
-    res.status(201).json(newOrder);
+    res.status(201).json({
+      orderId: newOrder._id,
+      products: orderProducts,
+      shippingAddress: newOrder.shippingAddress,
+      paymentMethod: newOrder.paymentMethod,
+      totalAmount: newOrder.totalAmount,
+    });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

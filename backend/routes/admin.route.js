@@ -16,7 +16,6 @@ import {
   getProductCategories,
 } from "../controllers/productCategories.controller.js";
 import {
-  getUserOrders,
   getAllOrders,
   updateOrderStatus,
 } from "../controllers/order.controller.js";

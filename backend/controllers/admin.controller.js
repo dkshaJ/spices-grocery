@@ -14,7 +14,7 @@ export const adminLogin = async (req, res) => {
   ) {
     return res.status(401).json({ message: "Invalid credentials" });
   }
-  const token = await jwt.sign(
+  const token = jwt.sign(
     {
       adminUsername,
       adminPassword,
@@ -28,7 +28,7 @@ export const adminLogin = async (req, res) => {
     httpOnly: true,
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",
-    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    maxAge: 7 * 24 * 60 * 60 * 1000,
   });
 
   return res.status(200).json({ message: "Admin logged in successfully" });
